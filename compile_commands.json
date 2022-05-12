@@ -1,0 +1,12 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++17",
+      "temp.cc"
+    ],
+    "directory": "/home/eemil/dev/jsonpp",
+    "file": "/home/eemil/dev/jsonpp/temp.cc"
+  }
+]
