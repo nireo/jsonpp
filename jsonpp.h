@@ -223,6 +223,27 @@ private:
       return val;
     }
 
+    if (tokens[pos].type_ == T_LEFT_BRACKET) {
+      json_value_t val{};
+      val.type_ = J_OBJECT;
+      auto obj = parse_obj(tokens, pos);
+      if (!obj.has_value()) {
+        return std::nullopt;
+      }
+
+      val.value_ = std::move(obj.value());
+      return val;
+    }
+
+    if (tokens[pos].type_ == T_STRING) {
+      json_value_t val{};
+      val.type_ = J_STRING;
+      val.value_ = std::get<std::string>(tokens[pos].data_);
+
+      ++pos;
+      return val;
+    }
+
     return std::nullopt;
   }
 };
