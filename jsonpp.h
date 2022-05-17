@@ -156,7 +156,7 @@ private:
       }
       case '}': {
         ++index;
-        res.push_back(token_t(T_RIGHT_BRACKET));
+        res.push_back(token_t(T_RIGHT_BRACE));
         continue;
       }
       case ',': {
@@ -183,7 +183,7 @@ private:
 
   std::optional<object_t> parse_obj(const std::vector<token_t> &tokens,
                                     size_t &pos) noexcept {
-    object_t res;
+    object_t res{};
     // objects have a string key, and then followed by a colon. After that we
     // have either an object, an array, a number or a string.
     ++pos; // skip the brace.
