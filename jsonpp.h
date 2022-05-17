@@ -41,7 +41,7 @@ enum status_t {
 
 class json_value_t;
 struct object_t {
-  object_t();
+  object_t(){};
   json_value_t &operator[](const std::string &val) { return values_[val]; }
   std::unordered_map<std::string, json_value_t> values_;
 };
@@ -59,14 +59,13 @@ struct token_t {
   std::variant<std::string, int64_t, std::monostate> data_{std::monostate{}};
 };
 
-class json_value_t {
+struct json_value_t {
   template <typename T>
   json_value_t(json_type_t ty, T data) : type_(ty), value_(data) {}
 
   template <typename T>
   json_value_t(json_type_t ty, T &&data) : type_(ty), value_(std::move(data)) {}
-
-private:
+  json_value_t() {}
   json_type_t type_{J_NONE};
   std::variant<object_t, std::string, int64_t, json_arr_t, std::monostate>
       value_{std::monostate{}};
@@ -74,7 +73,8 @@ private:
 
 class json_t {
 public:
-  json_t();
+  json_t() {}
+  json_value_t root_;
 
   status_t parse(const std::string &p) {
     auto tokens = parse_tokens(p);
@@ -84,7 +84,13 @@ public:
       // in this loop objects can either be arrays or
       // they can be objects.
       if (tokens[pos].type_ == T_LEFT_BRACE) {
+        auto obj = parse_obj(tokens, pos);
+        if (!obj.has_value()) {
+          return S_FAIL;
+        }
 
+        root_.value_ = std::move(obj.value());
+        root_.type_ = J_OBJECT;
       } else if (tokens[pos].type_ == T_LEFT_BRACKET) {
       } else {
         return S_FAIL; // unrecognized token at this point.
@@ -114,7 +120,7 @@ private:
           num_str += p[index];
           ++index;
         }
-        res.push_back(token_t(T_NUMBER, num_str));
+        res.push_back(token_t(T_NUMBER, std::stoll(num_str)));
         continue;
       }
 
@@ -198,19 +204,27 @@ private:
     }
     res[key] = std::move(value.value());
 
+    if (!match(tokens, pos, T_RIGHT_BRACE)) {
+      return std::nullopt;
+    }
+    ++pos;
+
     return res;
   }
 
   std::optional<json_value_t>
   parse_json_value(const std::vector<token_t> &tokens, size_t &pos) noexcept {
     if (tokens[pos].type_ == T_NUMBER) {
-      json_value_t val;
+      json_value_t val{};
+      val.type_ = J_NUMBER;
+      val.value_ = std::get<int64_t>(tokens[pos].data_);
+      ++pos;
+
+      return val;
     }
 
     return std::nullopt;
   }
-
-  json_value_t root_{};
 };
 
 } // namespace jsonpp
