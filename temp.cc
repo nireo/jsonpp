@@ -13,11 +13,11 @@ int main() {
   t.read(&buffer[0], size);
 
   val.parse(buffer);
+  std::cout << "root value type: " << val.root_.type_ << '\n';
   const auto &obj = std::get<jsonpp::object_t>(val.root_.value_);
   std::cout << obj.values_.size() << '\n';
   std::cout << obj.values_.at("hello").type_  << '\n';
 
-  std::cout << "root value type: " << val.root_.type_ << '\n';
 
   return 0;
 }

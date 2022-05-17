@@ -92,6 +92,13 @@ public:
         root_.value_ = std::move(obj.value());
         root_.type_ = J_OBJECT;
       } else if (tokens[pos].type_ == T_LEFT_BRACKET) {
+        auto obj = parse_array_literal(tokens, pos);
+        if (!obj.has_value()) {
+          return S_FAIL;
+        }
+
+        root_.type_ = J_ARRAY;
+        root_.value_ = std::move(obj.value().value_);
       } else {
         return S_FAIL; // unrecognized token at this point.
       }
@@ -223,7 +230,7 @@ private:
       return val;
     }
 
-    if (tokens[pos].type_ == T_LEFT_BRACKET) {
+    if (tokens[pos].type_ == T_LEFT_BRACE) {
       json_value_t val{};
       val.type_ = J_OBJECT;
       auto obj = parse_obj(tokens, pos);
@@ -241,6 +248,45 @@ private:
       val.value_ = std::get<std::string>(tokens[pos].data_);
 
       ++pos;
+      return val;
+    }
+
+    if (tokens[pos].type_ == T_LEFT_BRACKET) {
+    }
+
+    return std::nullopt;
+  }
+
+  std::optional<json_value_t>
+  parse_array_literal(const std::vector<token_t> &tokens,
+                      size_t &pos) noexcept {
+    ++pos;
+
+    std::vector<json_value_t> array_values;
+    while (tokens[pos].type_ != T_RIGHT_BRACKET && tokens[pos].type_ != T_EOF) {
+      auto val = parse_json_value(tokens, pos);
+      if (!val.has_value()) {
+        return std::nullopt;
+      }
+      array_values.push_back(std::move(val.value()));
+      if (!match(tokens, pos, T_COMMA)) {
+        return std::nullopt;
+      }
+      ++pos;
+    }
+
+    if (tokens[pos].type_ == T_EOF) {
+      return std::nullopt;
+    }
+
+    if (tokens[pos].type_ == T_RIGHT_BRACKET) {
+      json_arr_t arr{};
+      arr.values = std::move(array_values);
+
+      json_value_t val{};
+      val.type_ = J_ARRAY;
+      val.value_ = std::move(arr);
+
       return val;
     }
 
